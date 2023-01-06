@@ -21,7 +21,7 @@
        "name": "payload",
        "type": "array",
        "typeOf": "object",
-       "optional": false,
+       "optional": true,
        "properties": [
          {
            "name": "index",
@@ -49,44 +49,55 @@
          },
          
          {
-           name: 'body',
-           lable: 'Body'
+           name: 'exitCode',
+           lable: 'Exit Code',
+           type: "number"
+         },
+           {
+           name: 'errorMessage',
+           lable: 'Error Message'
+         },
+          {
+           name: 'output',
+           lable: 'Script Output',
+           type: "array",
+           typeOf: "string"
          }
        ]
      }
    }
  },
   actions: {
-    process_action: {
-      title: 'Process Action',
+    run_process: {
+      title: 'Run Process',
       input_fields: -> { [{ name: 'run' , label: 'Run', optional: false},{ name: 'resource', label: 'Resource', optional: false}, { name: 'startp', label: 'Start Point', optional: false }] },
  
 
       execute: ->(connection, input,object_definations) {
-        post("http://localhost/ext/#{connection['profile']}/api/v1/process-actions", input).headers('X-Workato-Connector': 'enforce')
+        post("http://localhost/ext/#{connection['profile']}/api/v1/run-process", input).headers('X-Workato-Connector': 'enforce')
       },
       output_fields: lambda do |object_definition|
-        object_definition['request_payload'] 
+        object_definition['response_payload'] 
     
       end
     },   
-    generic_process_action: {
-      title: 'Generic Action',
+    custom_process_action: {
+      title: 'Custom Action',
            input_fields: -> ( obj_def) {
           obj_def['request_payload']
        },
  
 
       execute: ->(connection, input,object_definations) {
-        post("http://localhost/ext/#{connection['profile']}/api/v1/process-actions", input['payload']).headers('X-Workato-Connector': 'enforce')
+        post("http://localhost/ext/#{connection['profile']}/api/v1/generic-actions", input['payload']).headers('X-Workato-Connector': 'enforce')
       },
       output_fields: lambda do |object_definition|
         object_definition['response_payload'] 
     
       end
     },
-    action_status: {
-      title: 'Get Action Status',
+    get_status: {
+      title: 'Get Status',
       input_fields: -> { [{ name: 'session_id' , label: 'Session Id', optional: false}] },
  
 
