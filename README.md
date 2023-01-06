@@ -1,5 +1,5 @@
 
-OPA extension SDK allows customers, external developers/partners to connect to legacy on-prem systems using Java within the Workato Agent infrastructure.
+OPA extension SDK allows customers to execute commands in the operating system
 
 
 ## Configuration
@@ -12,8 +12,8 @@ Extension mechanism is enabled by adding the `extensions` section to the config 
     extensions:
       security:
         controllerClass: com.pg.opa.controller.BluePrismController
-        scriptpath: /Users/projects/shell_scripts
-        scriptname: hello.sh
+        scriptpath: C:\Users\xyx\scripts
+        scriptname: hello.bat
 ```
 
 Individual endpoints are defined inside `extensions`, where every key serves as _endpoint name_. Every _endpoint name_ has to be valid identifier, has to be URL-friendly and cannot contain any special characters (like whitespace, etc.).
@@ -29,37 +29,28 @@ Endpoint request handling logic is defined by Spring REST controller class, prov
 
 ## Endpoint controller sample
 
-Full code can be found [here](https://github.com/workato/opa-extensions/blob/master/src/main/java/com/mycompany/onprem/SecurityExtension.java).
+Full code can be found [here](https://github.com/qureshii/workato-bp-extension/blob/main/opa_extension/src/main/java/com/pg/opa/controller/BluePrismController.java).
 
 ```java
-package com.mycompany.onprem;
-
 // import rest of the packages here:
-@Controller
-public class SecurityExtension {
+@GetMapping(path = "/ping")
+public ResponseEntity<ResponsePayload> ping() {
+        boolean fileExist = false;
+        try {
 
-    @Inject
-    private Environment env;
+        String path = scriptpath + File.separator + scriptname;
+        File file = new File(path);
+        fileExist = file.exists();
+        logger.info("Script {} , exist? {} ", path, fileExist);
+        } catch (Exception e) {
+        logger.error("Error in ping command {} ", e.getMessage());
+        return errorResponse(e.getMessage(), BAD_REQUEST);
+        }
+        return ResponseEntity
+        .status(fileExist ? OK : BAD_REQUEST)
+        .body(new ResponsePayload(true, 0, null, null));
+        }
 
-    @RequestMapping(method = RequestMethod.POST)
-    public @ResponseBody Map<String, Object> computeDigest(@RequestBody Map<String, Object> body) throws Exception {
-        Charset encoding = Charset.forName("UTF-8");
-        String payload = (String) body.get("payload");
-        MessageDigest digest = MessageDigest.getInstance("SHA-256");
-        digest.update(env.getProperty("secret").getBytes(encoding));
-        byte[] result = digest.digest(payload.getBytes(encoding));
-        return Collections.singletonMap("signature", Hex.encodeHexString(result));
-    }
-}
-```
-
-Given the configuration:
-
-```yml
-    extensions:
-      security:
-        controllerClass: SecurityExtension
-        secret: HA63A3043AMMMM 
 ```
 
 ## Building extension
@@ -94,35 +85,24 @@ Steps to build an extension:
 ## Using the extension in Recipe
 
 In order to use the extension in a recipe, we need a custom adapter in Workato. Sample adapter for the extension 
-can be found [here](https://github.com/workato/connector_sdk/blob/master/custom_connectors/basic_auth/onprem_security.rb).
+can be found [here](https://github.com/qureshii/workato-bp-extension/blob/main/custom_sdk/bp_sdk.rb).
 
 ```ruby
-{
-  title: 'On-prem security',
-  secure_tunnel: true,
+    generic_process_action: {
+      title: 'Generic Action',
+           input_fields: -> ( obj_def) {
+          obj_def['request_payload']
+       },
+ 
 
-  connection: {
-    fields: [{ name: 'profile', hint: 'On-prem security connection profile' }],
-    authorization: { type: 'none'}
-  },
-
-  test: ->(connection) {
-    post("http://localhost/ext/#{connection['profile']}/computeDigest", { payload: 'test' }).headers('X-Workato-Connector': 'enforce')
-  },
-
-  actions: {
-    sha256_digest: {
-
-      title: 'Create SHA-256 digest',
-      description: 'Create <span class="provider">SHA-256</span> digest',
-
-      input_fields: ->(_) { [{ name: 'payload' }] },
-      output_fields: ->(_) { [{name: 'signature'}] },
-
-      execute: ->(connection, input) {
-        post("http://localhost/ext/#{connection['profile']}/computeDigest", input).headers('X-Workato-Connector': 'enforce')
-      }
-    }
-  }
-}
+      execute: ->(connection, input,object_definations) {
+        post("http://localhost/ext/#{connection['profile']}/api/v1/process-actions", input['payload']).headers('X-Workato-Connector': 'enforce')
+      },
+      output_fields: lambda do |object_definition|
+        object_definition['response_payload'] 
+    
+      end
+    },
 ```
+## Download Jar
+A prebuild jar file can be found [here](https://github.com/qureshii/workato-bp-extension/tree/main/jar)
