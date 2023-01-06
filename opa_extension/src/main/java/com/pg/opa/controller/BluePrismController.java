@@ -145,9 +145,9 @@ public class BluePrismController {
     }
 
     @PostMapping(path = "/generic-actions")
-    public ResponseEntity<ResponsePayload> genericAction(@RequestBody List<CommandArgument> payload) {
+    public ResponseEntity<ResponsePayload> genericAction(@RequestBody(required = false) List<CommandArgument> payload) {
         if (logger.isDebugEnabled()) {
-            logger.debug("RunProcessAction {}", payload.toString());
+            logger.debug("RunProcessAction {}", payload);
         }
 
         List<String> sortedCommands = sortCommandArguments(payload);
@@ -163,7 +163,11 @@ public class BluePrismController {
             } else {
                 initialCommand.add(String.format("./%s", scriptname));
             }
-            processBuilder.command(Stream.concat(initialCommand.stream(), sortedCommands.stream()).collect(Collectors.toList()));
+            List<String> commands = Stream.concat(initialCommand.stream(), sortedCommands.stream()).collect(Collectors.toList());
+            if (logger.isDebugEnabled()) {
+                logger.debug("Commands to execute {}", commands);
+            }
+            processBuilder.command(commands);
             Process process = processBuilder.start();
             responsePayload.setSuccess(process.waitFor() == 0);
             responsePayload.setOutput(readOutput(process.getInputStream()));
@@ -181,6 +185,9 @@ public class BluePrismController {
 
     private List<String> sortCommandArguments(List<CommandArgument> arguments) {
         int count = 0;
+        if (arguments == null || arguments.isEmpty()) {
+            return Collections.emptyList();
+        }
         List<String> sortedCommands = arguments.stream()
                 .sorted((o1, o2) -> o1.getIndex())
                 .map((item) -> {

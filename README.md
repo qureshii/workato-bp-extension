@@ -10,7 +10,7 @@ Extension mechanism is enabled by adding the `extensions` section to the config 
     server:
       classpath: C:\\Program Files\\Workato Agent\\ext
     extensions:
-      security:
+      commandLine:
         controllerClass: com.pg.opa.controller.BluePrismController
         scriptpath: C:\Users\xyx\scripts
         scriptname: hello.bat
@@ -76,9 +76,10 @@ Steps to build an extension:
 
 ```yml
     extensions:
-      security:
-        controllerClass: SecurityExtension
-        secret: HA63A3043AMMMM
+      commandLine:
+        controllerClass: com.pg.opa.controller.BluePrismController
+        scriptpath: C:\Users\xyx\scripts
+        scriptname: hello.bat
 ```
 
 
