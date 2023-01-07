@@ -76,7 +76,7 @@ public class BluePrismController {
             processBuilder.directory(new File(scriptpath));
             if (isWindows) {
                 processBuilder.command("cmd.exe", "/c", scriptname,
-                        "/status", String.format(" \"%s \"",
+                        "/status", String.format("\"%s\"",
                                 sessionId, "/sso"));
 
             } else {
