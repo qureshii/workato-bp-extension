@@ -73,11 +73,10 @@ public class BluePrismController {
         ResponsePayload responsePayload = new ResponsePayload();
         ProcessBuilder processBuilder = new ProcessBuilder();
         try {
+
             processBuilder.directory(new File(scriptpath));
             if (isWindows) {
-                processBuilder.command("cmd.exe", "/c", scriptname,
-                        "/status", String.format("\"%s\"",
-                                sessionId, "/sso"));
+                processBuilder.command("cmd.exe", "/c", scriptname,"/status", String.format("\"%s\"",sessionId), "/sso");
 
             } else {
                 processBuilder.command(String.format("./%s", scriptname),
